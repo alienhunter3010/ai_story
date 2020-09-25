@@ -1,0 +1,6 @@
+/etc/keys.yaml
+/var/*.yaml
+/var/*.txt
+/var/*.log
+__pycache__
+*.mp3

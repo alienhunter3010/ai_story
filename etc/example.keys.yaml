@@ -1,0 +1,11 @@
+# Put here all your third part service's keys
+# Rename this file as keys.yaml or create a new one
+
+Telegram:
+  token: 000000000:ABCDEFGHIJKLMNOPQRSTUVWXYZ012345678
+Unsplash:
+  accessKey: ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-ABCDEF
+  secretKey: abcdefghijklmnopqrstuvwxyz-0123456789-ABCDE
+GoogleSearchImages:
+  apiKey: ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789-A
+  cx: 0123456789abcdef0
