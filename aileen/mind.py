@@ -1,9 +1,8 @@
-
-from aileen.IO import IO
-
+from aileen.Answer import Answer
 from aileen.Cluster import ServerCluster
 from aileen.Handlers import Handlers
 
+import os
 import socket
 import threading
 import json
@@ -20,9 +19,8 @@ class Mind:
         self.socket = socket.socket()         # Create a socket object
         host = socket.gethostname() # Get local machine name
         port = 50000                # Reserve a port for your service.
-        self.pill2kill = threading.Event()
-        signal.signal(signal.SIGTERM, self.sig_heil)
-        signal.signal(signal.SIGINT, self.sig_heil)
+        signal.signal(signal.SIGTERM, self.stopping)
+        signal.signal(signal.SIGINT, self.stopping)
 
         while True:
             try:
@@ -33,7 +31,7 @@ class Mind:
                 logging.info("Address in use. Trying again in 10 secs")
                 time.sleep(10)
 
-    def sig_heil(self, signal, frame):
+    def stopping(self, signal, frame):
         logging.info('SIG({}) received'.format(signal))
         self.clean_exit()
 
@@ -41,26 +39,29 @@ class Mind:
         self.socket.listen(5)                  # Now wait for client connection.
         while True:
             c, addr = self.socket.accept()     # Establish connection with client.
-            #c.settimeout(2)
-            t = threading.Thread(target=self.dialog, args=(c, addr, self.pill2kill))
+            t = threading.Thread(target=self.dialog, args=(c, addr))
             t.start()
             self.client_connections.append(t)
+            if os.path.exists('out_of_mind'):
+                break
         self.clean_exit()
 
     def clean_exit(self):
         self.cluster.save_evolution(exiting=True)
         self.socket.close()
-        self.pill2kill.set()
         for thread in self.client_connections:
             if thread.is_alive():
                 try:
                     thread.join()
                 except RuntimeError:
                     pass
+        self.cluster.save_evolution(exiting=True)
         logging.info('\nBye bye')
+        if os.path.exists('out_of_mind'):
+            os.unlink('out_of_mind')
         exit(0)
 
-    def dialog(self, clientsocket, address, stop_event):
+    def dialog(self, clientsocket, address):
         clientsocket.send(
             self.pack(self.cluster.get_evolution(client=True)).encode()
         )
@@ -71,14 +72,16 @@ class Mind:
                 continue
             if cmd == 'gOOd-bYe':
                 break
-            elif cmd.startswith('shUt-dOwn'):
-                clientsocket.close()
-                self.clean_exit()
-            answer = Handlers.getInstance().exec_control(cmd)
+            try:
+                answer = Handlers.getInstance().exec_control(cmd)
+            except:
+                answer = Answer()
             clientsocket.send(self.pack(answer.get_dict()).encode())
             if answer.binary is not None:
                 time.sleep(0.1)
                 clientsocket.send(answer.binary)
+            if os.path.exists('out_of_mind'):
+                break
         clientsocket.close()
 
     def pack(self, messages):

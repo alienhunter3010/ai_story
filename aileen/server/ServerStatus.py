@@ -9,7 +9,7 @@ class ServerStatus(Feature):
     counter = 0
     smart_points = 0
 
-    def set_verbose(self, arg, answer=Answer()):
+    def set_verbose(self, arg, question=None, answer=Answer()):
         if arg == 'yes':
             self.verbose = True
         elif arg == 'no':
@@ -18,22 +18,22 @@ class ServerStatus(Feature):
             self.verbose = not self.verbose
         return answer.append_rows([ "I'm chatty" if self.verbose else "Sshttt!" ])
 
-    def set_name(self, name, answer=Answer()):
+    def set_name(self, name, question=None, answer=Answer()):
         self.name = name
         return answer.append_rows(["Call me {}, now".format(self.name)])
 
-    def balance(self, trash, answer=Answer()):
+    def balance(self, trash, question=None, answer=Answer()):
         return answer.append_rows([
             "You actually have {} smart points".format(self.smart_points)
         ])
 
-    def greetings(self, trash, answer=Answer()):
+    def greetings(self, trash, question=None, answer=Answer()):
         return answer.prepend_rows([
             "\t<code>An AI story</code> is written in <b>Python</b> by Alessio Cecchin",
             "\tIt uses FOSS libraries and open services\n"
         ])
 
-    def help(self, trash, answer=Answer()):
+    def help(self, trash, question=None, answer=Answer()):
         answer = answer.prepend_rows([
             "\n  <b>Basic commands:</b>",
             "\t<pre>who are you</pre>\tto discover something more about me",
@@ -55,7 +55,7 @@ class ServerStatus(Feature):
             .add_control('help', self.help)\
             .add_control('.*', self.any)
 
-    def any(self, trash, answer=Answer()):
+    def any(self, trash, question=None, answer=Answer()):
         self.counter += 1
         if self.counter == 10:
             answer.prepend_rows(["<ansicyan>Interacting with the AI you earn respect with the community.</ansicyan>"])
@@ -64,7 +64,7 @@ class ServerStatus(Feature):
             answer.append_rows(["You earn 5 smart points."])
         return answer
 
-    def whoami(self, trash=None, answer=Answer()):
+    def whoami(self, trash=None, question=None, answer=Answer()):
         if self.verbose:
             answer.append_rows(['I would like to grow. I hope you help me.'])
         return answer.prepend_rows(['\nI am an AI.' if self.name is False else "\nMy name is {}".format(self.name)])

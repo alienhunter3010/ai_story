@@ -40,6 +40,6 @@ class Handlers:
         answer = Answer()
         for c in commands:
             for m in commands[c]:
-                answer = m(re.sub(c, '', command).strip(), answer=answer)
+                answer = m(re.sub(c, '', command).strip(), question=command, answer=answer)
         return answer
 

@@ -7,6 +7,7 @@ from aileen.plugin import *
 from telegram.ext import Updater, InlineQueryHandler, MessageHandler, Filters
 
 import re
+import time
 
 from aileen.Config import Keys
 
@@ -64,8 +65,10 @@ class Telegram(Remote):
     def output(self, bot, chat_id, answer):
         for row in answer['rows']:
             bot.send_message(chat_id, row, parse_mode='html' if answer['style'] == 'HTML' else None)
+            time.sleep(1)
         for row in answer['raw_rows']:
             bot.send_message(chat_id, row)
+            time.sleep(1)
         if 'parser' in answer['setup']:
             what_is = Callbackable.solve_callback(answer['setup']['parser'], self.cluster)(self.receive_binary(), arguments=Callbackable.optional(answer['setup'], 'arguments', None))
             if what_is['type'] == 'image':

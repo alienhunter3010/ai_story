@@ -10,24 +10,24 @@ import json
 class ServerUtils(Feature):
     value = 0
 
-    def time(self, trash, answer=Answer()):
+    def time(self, trash, question=None, answer=Answer()):
         return self.echo(time.strftime("Today is %Y-%m-%d, the time is %H:%M:%S"), answer)
 
-    def ip(self, trash, answer=Answer()):
+    def ip(self, trash, question=None, answer=Answer()):
         r = requests.get("https://httpbin.org/ip")
         result = json.loads(r.text)
         return self.echo("On the Net I'm using {}".format(result["origin"]), answer)
 
-    def real_ai(self, trash, answer=Answer()):
+    def real_ai(self, trash, question=None, answer=Answer()):
         return self.echo(
             "I'm not. This is just a game. Or maybe... I'm the seed of a new type of AI",
             answer
         )
 
-    def where(self, trash, answer=Answer()):
+    def where(self, trash, question=None, answer=Answer()):
         return self.echo("The answer is... from the Internet!", answer)
 
-    def greetings(self, trash, answer=Answer()):
+    def greetings(self, trash, question=None, answer=Answer()):
         return self.echo(
             "\t<code>Utils</code> plugin use some net functions from <b>httpbin.org</b> by Kenneth Reitz",
             answer

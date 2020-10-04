@@ -10,7 +10,7 @@ class ServerDdg(Feature):
     value = 5
     api_url = 'https://api.duckduckgo.com/?q={}&format=json'
 
-    def search(self, what, answer=Answer()):
+    def search(self, what, question=None, answer=Answer()):
         r = requests.get(self.api_url.format(what))
         payload = json.loads(r.content)
         answer.style = 'ANSI'
@@ -18,7 +18,7 @@ class ServerDdg(Feature):
             payload['RelatedTopics'][0]['Text'] if payload['Abstract'] == '' else payload['Abstract']
         ])
 
-    def greetings(self, trash, answer=Answer()):
+    def greetings(self, trash, question=None, answer=Answer()):
         return answer.append_rows([
             "\t<code>Ddg</code> search engine is powered by <b>DuckDuckGo</b>'s API"
         ])

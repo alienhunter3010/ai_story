@@ -5,7 +5,7 @@ from aileen.Answer import Answer
 
 class ServerSetup(Feature):
 
-    def help(self, trash, answer=Answer()):
+    def help(self, trash, question=None, answer=Answer()):
         return answer.append_rows([
             "\n  <bold>Setup commands:</bold>",
             "\t<pre>add (feature)</pre>\tadd a new ability"

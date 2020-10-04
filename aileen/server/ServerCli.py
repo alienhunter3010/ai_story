@@ -10,7 +10,7 @@ class ServerCli(Feature):
         self.has_history = False
         self.color_style = {}
 
-    def colors(self, trash=None, answer=Answer()):
+    def colors(self, trash=None, question=None, answer=Answer()):
         self.color_style = {
             'simple': '#000000 bg:ansigreen bold',
             'isimple': 'bg:#000000 ansigreen',
@@ -29,11 +29,11 @@ class ServerCli(Feature):
         }
         return answer
 
-    def whatsup(self, trash, answer=Answer()):
+    def whatsup(self, trash, question=None, answer=Answer()):
         answer.append_rows(["L<b>AI</b>fe is monochrome" if len(self.color_style) < 2 else "Feel enl<b>AI</b>ghted"])
         return answer
 
-    def persist_history(self, trash=None, answer=Answer()):
+    def persist_history(self, trash=None, question=None, answer=Answer()):
         answer.append_rows(["History log is <bold>on</bold>"])
         answer.setup['history'] = self.has_history = True
         return answer

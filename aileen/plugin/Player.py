@@ -13,11 +13,11 @@ class Player(Feature):
         mixer.music.load(io.BytesIO(source))
         mixer.music.play()
 
-    def stop(self, trash, answer=Answer()):
+    def stop(self, trash, question=None, answer=Answer()):
         mixer.music.stop()
         return answer.append_rows(["STOP player"])
 
-    def volume(self, arg, answer=Answer()):
+    def volume(self, arg, question=None, answer=Answer()):
         vol = mixer.music.get_volume()
         if arg == 'mute':
             vol = 0

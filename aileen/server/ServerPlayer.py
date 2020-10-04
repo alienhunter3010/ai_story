@@ -19,21 +19,21 @@ class ServerPlayer(Binary):
             .add_control('compose', self.compose) \
             .add_control('greetings', self.greetings)
 
-    def compose(self, trash, answer=Answer()):
+    def compose(self, trash, question=None, answer=Answer()):
         r = requests.get(self.computoser_url)
-        response = requests.get(self.computoser_mp3.format(r.text))
-        if response.content is None:
+        content = self.download_binary(self.computoser_mp3.format(r.text))
+        if content is None:
             return answer.append_rows("Unable do compose new music, actually")
-        else:
-            answer.binary = response.content
-            answer.append_rows(["Let's play {}'s song".format(r.text)])
-            # Cache it
-            fn = "assets/music/{}.mp3".format(t.text)
-            with open(fn, 'wb') as fp:
-                fp.write(answer.binary)
-            return self.play(r.text, answer=answer)
 
-    def play(self, cached_song, answer=Answer()):
+        answer.binary = content
+        answer.append_rows(["Let's play {}'s song".format(r.text)])
+        # Cache it
+        fn = "assets/music/{}.mp3".format(r.text)
+        with open(fn, 'wb') as fp:
+            fp.write(answer.binary)
+        return self.play(r.text, answer=answer)
+
+    def play(self, cached_song, question=None, answer=Answer()):
         try:
             if answer.binary is None:
                 if cached_song is not None:
@@ -49,7 +49,8 @@ class ServerPlayer(Binary):
             answer.append_rows(["Sorry, file '{}' not found".format(fn)])
         return answer
 
-    def greetings(self, trash, answer=Answer()):
+    def greetings(self, trash, question=None, answer=Answer()):
         return answer.append_rows([
-            "\t<code>Player</code> plugin load self-generated music from <b>computoser.com</b> by Bozhidar Bozhanov"
+            "\t<code>Player</code> plugin load self-generated music from <b>computoser.com</b> by Bozhidar Bozhanov",
+            "\t<code>Player</code> plugin uses <b>PyGame</b> mixer to play music from terminal interface"
         ])

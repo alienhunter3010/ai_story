@@ -10,6 +10,7 @@ from aileen.plugin import *
 
 import sys
 import logging
+from importlib import reload
 
 
 class NotAFeature(Exception):
@@ -74,6 +75,7 @@ class ServerCluster(Cluster):
         self.load_evolution()
         Handlers.getInstance() \
             .add_control('add', self.add_plugin) \
+            .add_control('reload', self.reload_plugin) \
             .add_control('save', self.save)
 
     def birth(self):
@@ -81,13 +83,28 @@ class ServerCluster(Cluster):
             .add(ServerStatus.ServerStatus())\
             .add(ServerSetup.ServerSetup())
 
-    def add_plugin(self, plugin, answer=Answer()):
+    def add_plugin(self, plugin, question=None, answer=Answer()):
         try:
             return answer.append_rows(
                 self.pay(self.get_plugin_class('Server{}'.format(plugin.capitalize()))) or []
             )
         except KeyError:
             return answer
+
+    def reload_plugin(self, plugin, question=None, answer=Answer()):
+        try:
+            module = self.get_plugin_class('Server{}'.format(plugin.capitalize()))
+            if module in self.features:
+                module = reload(module)
+
+            return answer.append_rows([
+                "Plugin {} reloaded".format(plugin)
+            ])
+        except KeyError:
+            return answer.append_rows([
+                "Unable to reload plugin {}".format(plugin)
+            ])
+
 
     def add(self, feature):
         if isinstance(feature, Feature):
@@ -136,7 +153,7 @@ class ServerCluster(Cluster):
             ] = feature.save(exiting=exiting)
         return evolution
 
-    def save(self, trash=None, answer=Answer()):
+    def save(self, trash=None, question=None, answer=Answer()):
         self.save_evolution()
         return answer.append_rows(["Saving my evolution's path. Thanks!"])
 

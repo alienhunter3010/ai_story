@@ -15,10 +15,8 @@ class ServerViewer(Binary):
             .add_control('view', self.view)\
             .add_control('greetings', self.greetings)
 
-    def view(self, source, answer=Answer()):
+    def view(self, source, question=None, answer=Answer()):
         return self.binary(source, answer)
 
-    def greetings(self, trash, answer=Answer()):
-        return answer.append_rows([
-            "\t<code>Viewer</code> plugin is inspired to <b>viu</b> written in Rust by Atanas Yankov"
-        ])
+    def greetings(self, trash, question=None, answer=Answer()):
+        return self.echo("\t<code>Viewer</code> plugin is inspired to <b>viu</b> written in Rust by Atanas Yankov", answer)

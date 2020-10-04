@@ -4,3 +4,6 @@
 /var/*.log
 __pycache__
 *.mp3
+test*
+.idea
+TODO.md

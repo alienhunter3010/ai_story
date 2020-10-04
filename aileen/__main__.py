@@ -4,48 +4,55 @@ import daemon
 import logging
 
 
-def mind():
-    from aileen.mind import Mind
+class Main:
 
-    logging.info("Inside Mind daemon!")
-    o = Mind()
-    o.run()
+    def mind(self):
+        from aileen.mind import Mind
 
-
-def telegram():
-    from aileen.telegram import Telegram
-
-    logging.info("Inside Telegram daemon!")
-    o = Telegram()
-    o.run()
+        logging.info("Inside Mind daemon!")
+        o = Mind()
+        o.run()
 
 
-def log_setup():
-    logging.basicConfig(filename="/home/acecchin/projects/python/ai_story/var/aileen.log")
+    def telegram(self):
+        from aileen.telegram import Telegram
+
+        logging.info("Inside Telegram daemon!")
+        o = Telegram()
+        o.run()
 
 
-def daemonize(callback, working_directory="/"):
-    with daemon.DaemonContext(working_directory=working_directory):
-        callback()
+    def log_setup(self):
+        logging.info("Switching log to {}".format("{}/var/aileen.log".format(os.getcwd())))
+        logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s',
+            level=logging.INFO, filename="{}/var/aileen.log".format(os.getcwd()))
 
 
-logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s',
-        level=logging.INFO)
+    def daemonize(self, callback, working_directory="/"):
+        with daemon.DaemonContext(working_directory=working_directory):
+            callback()
 
-if 'mind' in sys.argv:
-    if 'fg' in sys.argv:
-        mind()
-    else:
-        log_setup()
-        daemonize(mind, working_directory=os.getcwd())
-elif 'telegram' in sys.argv:
-    if 'fg' in sys.argv:
-        telegram()
-    else:
-        log_setup()
-        daemonize(telegram)
-else:
-    from aileen.main import AIleen
+    def launcher(self, callback):
+        if 'fg' in sys.argv:
+            callback()
+        else:
+            self.log_setup()
+            self.daemonize(callback, working_directory=os.getcwd())
 
-    o = AIleen()
-    o.run()
+    def start(self):
+        logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s',
+                level=logging.INFO)
+
+        if 'mind' in sys.argv:
+            self.launcher(self.mind)
+        elif 'telegram' in sys.argv:
+            self.launcher(self.telegram)
+        else:
+            from aileen.main import AIleen
+
+            o = AIleen()
+            o.run()
+
+
+app = Main()
+app.start()
