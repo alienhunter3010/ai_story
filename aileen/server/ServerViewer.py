@@ -7,7 +7,7 @@ from aileen.Answer import Answer
 class ServerViewer(Binary):
     value = 10
 
-    def __init__(self):
+    def __init__(self, setup=None):
         super().__init__(['aileen.{}.Viewer', 'Viewer', 'view'])
 
     def add_controls(self):

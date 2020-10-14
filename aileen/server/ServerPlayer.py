@@ -10,11 +10,11 @@ class ServerPlayer(Binary):
     computoser_mp3 = 'http://dhvexktaalgrs.cloudfront.net/{}.mp3'
     value = 10
 
-    def __init__(self):
-        super().__init__(['aileen.{}.Player', 'Player', 'play'])
+    def __init__(self, setup=None):
+        super().__init__(['aileen.{}.Player', 'Player', 'play'], setup=setup)
 
     def add_controls(self):
-        h = Handlers.getInstance()\
+        Handlers.getInstance()\
             .add_control('play', self.play) \
             .add_control('compose', self.compose) \
             .add_control('greetings', self.greetings)

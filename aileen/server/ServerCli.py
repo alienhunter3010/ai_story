@@ -5,10 +5,11 @@ from aileen.Handlers import Handlers
 
 class ServerCli(Feature):
 
-    def __init__(self):
+    def __init__(self, setup=None):
         self.prompt = ' $ '
         self.has_history = False
         self.color_style = {}
+        super().__init__(setup)
 
     def colors(self, trash=None, question=None, answer=Answer()):
         self.color_style = {

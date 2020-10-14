@@ -9,6 +9,7 @@ import json
 import time
 import signal
 import logging
+from pathlib import Path
 
 
 class Mind:
@@ -72,10 +73,16 @@ class Mind:
                 continue
             if cmd == 'gOOd-bYe':
                 break
+            if cmd.startswith('shUt-dOwn'):
+                # Close this socket AND say to any thread and to main process to shutdown
+                Path('out_of_mind').touch()
+                break
             try:
                 answer = Handlers.getInstance().exec_control(cmd)
             except:
                 answer = Answer()
+            if not answer.has_contents():
+                answer = self.cluster.chatter.exec_control(cmd)
             clientsocket.send(self.pack(answer.get_dict()).encode())
             if answer.binary is not None:
                 time.sleep(0.1)

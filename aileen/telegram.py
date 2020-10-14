@@ -1,3 +1,4 @@
+from aileen.Answer import Answer
 from aileen.Callbackable import Callbackable
 from aileen.Remote import Remote
 from aileen.Cluster import NoFxCluster
@@ -13,6 +14,7 @@ from aileen.Config import Keys
 
 
 class Telegram(Remote):
+    request_prefix = ''
     updater = None
     token = '123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ012345678'
     cmds = []
@@ -57,9 +59,17 @@ class Telegram(Remote):
 
     def deliver(self, bot, update):
         chat_id = update.message.chat_id
-        answer = Handlers.getInstance().exec_control(update.message.text)
+        if update.message.text.startswith('set quiet-prefix '):
+            self.request_prefix = update.message.text.replace('set quiet-prefix ', '')
+            answer = Answer(rows=['New prefix string is {}'.format(self.request_prefix)])
+            self.output(bot, chat_id, answer)
+            return
+        if not update.message.text.startswith(self.request_prefix):
+            return
+        txt = update.message.text[len(self.request_prefix):]
+        answer = Handlers.getInstance().exec_control(txt)
         if not answer.has_totalk():
-            answer = self.solve(update.message.text)
+            answer = self.solve(txt)
         self.output(bot, chat_id, answer)
 
     def output(self, bot, chat_id, answer):

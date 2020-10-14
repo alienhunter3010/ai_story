@@ -30,8 +30,9 @@ class Cli(AIIO):
     has_history = False
     style_dict = {}
 
-    def __init__(self):
+    def __init__(self, setup={}):
         super().__init__()
+        self.load(setup)
 
     def ask(self, message=False):
         return self.session.prompt(

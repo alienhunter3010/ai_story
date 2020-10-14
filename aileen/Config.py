@@ -15,7 +15,7 @@ class Config:
     def load():
         logging.info("Loading setup")
         with open(Config.config_file) as f:
-            return yaml.load(f, Loader=yaml.FullLoader)
+            return yaml.load(f)
 
 
 class Keys:
@@ -27,7 +27,7 @@ class Keys:
     def load():
         logging.info("Loading keys")
         with open(Keys.key_file) as f:
-            Keys.keys = yaml.load(f, Loader=yaml.FullLoader)
+            Keys.keys = yaml.load(f, Loader=yaml.Loader)
 
     @staticmethod
     def get(product):

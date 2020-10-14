@@ -1,4 +1,6 @@
-from aileen.Feature import Feature
+import logging
+
+from aileen.Chatter import PluggableAdapters, AutoAdapter
 from aileen.Answer import Answer
 from aileen.Handlers import Handlers
 from aileen.intersect.TupleForOutput import TupleOut
@@ -6,43 +8,30 @@ from aileen.intersect.TupleForOutput import TupleOut
 from wolframclient.evaluation import WolframLanguageSession
 from wolframclient.language import wl, wlexpr
 
+import re
 
-class ServerWolfram(Feature):
+
+class ServerWolfram(PluggableAdapters):
     value = 50
+    session = None
 
-    def __init__(self):
-        self.session = WolframLanguageSession()
+    def __init__(self, bot=None, setup=None, **kwargs):
+        super().__init__(bot=bot, setup=setup, **kwargs)
+        ServerWolfram.session = WolframLanguageSession()
 
     def __del__(self):
-        self.session.stop()
-        self.session.terminate()
+        ServerWolfram.session.stop()
+        ServerWolfram.session.terminate()
 
-    def wolfram_try(self, payload, mode="SpokenResult", gatling=("ShortAnswer", "Result"), answer=Answer()):
-        wlf = self.session.evaluate(wl.WolframAlpha(payload, mode))
-        if isinstance(wlf, str):
-            return self.echo(wlf, answer)
-        elif "No{}".format(mode) in wlf.args:
-            return self.wolfram_try(payload, mode=gatling[0], gatling=gatling[1:], answer=answer)
-        return self.echo(self.readable(wlf), answer)
-
-    def wolfram_alpha(self, payload, question=None, answer=Answer()):
-        return self.wolfram_try(payload, answer=answer)
-
-    def wolframify(self, trash, question=None, answer=Answer()):
-        if answer.has_totalk():
-            return answer
-        return self.wolfram_alpha(question, answer=answer)
+    def register_adapters(self, bot, **kwargs):
+        self.inject_adapter(bot, WaAdapter)\
+            .inject_adapter(bot, WlAdapter)
 
     def greetings(self, trash, question=None, answer=Answer()):
         return self.echo(
             "\t<code>Wolfram</code> plugin use Wolfram's Python library to interact with <b>wolframalpha.com</b> APIs",
             answer
         )
-
-    def wl(self, expr, question=None, answer=Answer()):
-        return self.echo( self.readable(
-            self.session.evaluate(wlexpr(expr))
-        ))
 
     def help(self, trash, question=None, answer=Answer()):
         return answer.append_rows([
@@ -53,12 +42,79 @@ class ServerWolfram(Feature):
 
     def add_controls(self):
         Handlers.getInstance() \
-            .add_control('wl', self.wl) \
             .add_control('greetings', self.greetings) \
             .add_control('help', self.help) \
-            .add_control('wa', self.wolfram_alpha) \
-            .add_control('.*', self.wolframify)
+
+
+#
+# Adapters
+#
+
+
+class WolframAdapter(AutoAdapter):
+    def __init__(self, bot=None, command='wa', **kwargs):
+        super().__init__(bot, **kwargs)
+        self.rcut = re.compile(r"^{} ".format(command), re.IGNORECASE)
+
+    def wolfram_try(self, payload, mode="SpokenResult", gatling=("ShortAnswer", None)):
+        wlf = ServerWolfram.session.evaluate(wl.WolframAlpha(payload)) \
+                if mode is None else ServerWolfram.session.evaluate(wl.WolframAlpha(payload, mode))
+        if isinstance(wlf, str):
+            return wlf
+        elif type(wlf) is tuple:
+            return self.readable(wlf)
+        elif wlf is None or "No{}".format(mode) in wlf.args:
+            if len(gatling) == 0:
+                return ""
+            return self.wolfram_try(payload, mode=gatling[0], gatling=gatling[1:])
+        return ""
 
     def readable(self, tpl):
+        if len(tpl) > 0 and len(tpl[-1]) > 0:
+            return tpl[-1][1]
+        # return ''
         return TupleOut.joint(tpl, armored=False)
 
+
+class WaAdapter(WolframAdapter):
+
+    def __init__(self, bot=None, setup=None, **kwargs):
+        super().__init__(bot=bot, command="wa", **kwargs)
+
+    def can_process(self, statement):
+        return True
+
+    def process(self, input_statement, additional_response_selection_parameters=None):
+        result = super().process(input_statement, additional_response_selection_parameters)
+        result.text = self.wolfram_alpha(self.rcut.sub('', input_statement.text))
+
+        if isinstance(result.text, str) and len(result.text) > 10:
+            result.confidence = 1 if input_statement.text.startswith('wa ') else 0.8
+        else:
+            result = super().process(input_statement, additional_response_selection_parameters)
+        return result
+
+    def wolfram_alpha(self, payload):
+        return self.wolfram_try(payload)
+
+
+class WlAdapter(WolframAdapter):
+
+    def __init__(self, bot=None, setup=None, **kwargs):
+        super().__init__(bot=bot, command="wl", **kwargs)
+
+    def can_process(self, statement):
+        if statement.text.startswith('wl '):
+            return True
+        return False
+
+    def process(self, input_statement, additional_response_selection_parameters=None):
+        result = super().process(input_statement, additional_response_selection_parameters)
+        result.text = self.wl(input_statement.text.replace('wl ', ''))
+        result.confidence = 1 if len(result.text) > 0 else 0
+        return result
+
+    def wl(self, expr):
+        return self.readable(
+            ServerWolfram.session.evaluate(wlexpr(self.rcut.sub('', expr)))
+        )

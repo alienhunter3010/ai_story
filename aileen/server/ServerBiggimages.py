@@ -1,3 +1,5 @@
+import logging
+
 from google_images_search import GoogleImagesSearch
 
 from aileen.Answer import Answer
@@ -6,11 +8,11 @@ from aileen.Handlers import Handlers
 from aileen.server.ServerViewer import ServerViewer
 
 
-class ServerBigGImages(ServerViewer):
+class ServerBiggimages(ServerViewer):
     value = 30
 
-    def __init__(self):
-        super().__init__();
+    def __init__(self, setup=None):
+        super().__init__(setup=setup);
         # define search params:
         self._search_params = {
             'q': 'Nemo',
@@ -26,7 +28,7 @@ class ServerBigGImages(ServerViewer):
         self.gis = GoogleImagesSearch(gcs['apiKey'], gcs['cx'])
 
     def add_controls(self):
-        h = Handlers.getInstance()\
+        Handlers.getInstance()\
             .add_control('show', self.show)\
             .add_control('greetings', self.greetings)
 
@@ -36,13 +38,8 @@ class ServerBigGImages(ServerViewer):
         ])
 
     def show(self, source, question=None, answer=Answer()):
-        print("Searching for: {}".format(source))
+        logging.info("Searching for: {}".format(source))
         self._search_params['q'] = source
         self.gis.search(search_params=self._search_params)
         for image in self.gis.results():
-            content = self.download_binary(image.url)
-            if content is None:
-                continue # Try again
-            answer.binary = content
-            answer.append_rows(["Look at this..."])
-            return answer
+            return self.binary(image.url, answer)

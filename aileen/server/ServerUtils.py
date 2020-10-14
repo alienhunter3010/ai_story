@@ -1,31 +1,23 @@
-from aileen.Feature import Feature
-from aileen.Answer import Answer
-from aileen.Handlers import Handlers
+import logging
 
-import time
+from aileen.Answer import Answer
+from aileen.Chatter import AutoAdapter, PluggableAdapters
+
 import requests
 import json
 
 
-class ServerUtils(Feature):
+class ServerUtils(PluggableAdapters):
     value = 0
 
-    def time(self, trash, question=None, answer=Answer()):
-        return self.echo(time.strftime("Today is %Y-%m-%d, the time is %H:%M:%S"), answer)
+    def __init__(self, bot=None, setup=None, **kwargs):
+        super().__init__(bot=bot, setup=setup, **kwargs)
+        # Load all and now
+        self.corpus = './var/corpus'
+        self.train(bot)
 
-    def ip(self, trash, question=None, answer=Answer()):
-        r = requests.get("https://httpbin.org/ip")
-        result = json.loads(r.text)
-        return self.echo("On the Net I'm using {}".format(result["origin"]), answer)
-
-    def real_ai(self, trash, question=None, answer=Answer()):
-        return self.echo(
-            "I'm not. This is just a game. Or maybe... I'm the seed of a new type of AI",
-            answer
-        )
-
-    def where(self, trash, question=None, answer=Answer()):
-        return self.echo("The answer is... from the Internet!", answer)
+    def register_adapters(self, bot, **kwargs):
+        self.inject_adapter(bot, ipAdapter)
 
     def greetings(self, trash, question=None, answer=Answer()):
         return self.echo(
@@ -33,11 +25,26 @@ class ServerUtils(Feature):
             answer
         )
 
-    def add_controls(self):
-        Handlers.getInstance()\
-            .add_control('what time is it', self.time) \
-            .add_control('what is your ip', self.ip) \
-            .add_control('are you a real ai', self.real_ai) \
-            .add_control('where are you from', self.where) \
-            .add_control('greetings', self.greetings) \
-            .add_control('debug', self.echo)
+#
+# Adapters
+#
+
+
+class ipAdapter(AutoAdapter):
+
+    def can_process(self, statement):
+        if statement.text.startswith('what is your ip'):
+            return True
+        return False
+
+    def ip(self):
+        r = requests.get("https://httpbin.org/ip")
+        result = json.loads(r.text)
+        return "On the Net I'm using {}".format(result["origin"])
+
+    def process(self, input_statement, additional_response_selection_parameters=None):
+        result = super().process(input_statement, additional_response_selection_parameters)
+        if input_statement.text.startswith('what is your ip'):
+            result.text = self.ip()
+            result.confidence = 1
+        return result

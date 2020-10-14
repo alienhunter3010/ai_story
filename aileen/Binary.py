@@ -9,7 +9,8 @@ from aileen.Feature import Feature
 
 class Binary(Feature):
 
-    def __init__(self, parser=[]):
+    def __init__(self, parser=[], setup=None):
+        super().__init__(setup)
         self.parser = parser
 
     def load_binary(self, source, answer):

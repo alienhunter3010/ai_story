@@ -1,3 +1,6 @@
+from chatterbot.logic import LogicAdapter
+
+from aileen.Chatter import Chatter
 from aileen.Persist import Persist
 from aileen.Feature import Feature
 from aileen.AIIO import AIIO
@@ -19,7 +22,8 @@ class NotAFeature(Exception):
 
 class Cluster(Persist):
 
-    def __init__(self, module):
+    def __init__(self, module, setup=None):
+        super().__init__(setup)
         self.features = []
         self.module = module
 
@@ -35,12 +39,16 @@ class Cluster(Persist):
     def get_plugin_class(self, clazz):
         return getattr(sys.modules['aileen.{}.{}'.format(self.module, clazz)], clazz)
 
+    def get_plugin_instance(self, clazz, setup=None):
+        logging.debug("Creating {}".format(clazz))
+        o = clazz(setup=setup)
+        return o
+
     def load_config(self, config):
         for feature_name in config:
             try:
                 c = self.get_plugin_class(feature_name)
-                o = c()
-                o.load(config[feature_name])
+                o = self.get_plugin_instance(c, setup=config[feature_name])
                 self.add(o)
             except KeyError:
                 pass
@@ -72,6 +80,7 @@ class ServerCluster(Cluster):
 
     def __init__(self):
         super().__init__('server')
+        self.chatter = Chatter()
         self.load_evolution()
         Handlers.getInstance() \
             .add_control('add', self.add_plugin) \
@@ -105,16 +114,15 @@ class ServerCluster(Cluster):
                 "Unable to reload plugin {}".format(plugin)
             ])
 
-
-    def add(self, feature):
-        if isinstance(feature, Feature):
-            self.prepare_feature(feature)
-            if isinstance(feature, ServerStatus.ServerStatus):
-                self.status = feature
-            elif isinstance(feature, ServerSetup.ServerSetup):
-                self.setup = feature
+    def add(self, ability):
+        if isinstance(ability, Feature):
+            self.prepare_feature(ability)
+            if isinstance(ability, ServerStatus.ServerStatus):
+                self.status = ability
+            elif isinstance(ability, ServerSetup.ServerSetup):
+                self.setup = ability
         else:
-            raise NotAFeature("{} is not a Feature object".format(feature))
+            raise NotAFeature("{} is not a Feature object".format(ability))
         return self
 
     def pay(self, clazz):
@@ -123,19 +131,24 @@ class ServerCluster(Cluster):
         for feature in self.features:
             if isinstance(feature, type(clazz)):
                 return []
-        if clazz.value > self.status.smart_points:
+        if clazz.value > ServerStatus.ServerStatus.smart_points:
             sorry = [ "Sorry, you need more smart points. <ansiyellow>{}</ansiyellow>'s value is {}. You have SP {} on your wallet"
-                          .format(Feature.get_pure_name_of(clazz), clazz.value, self.status.smart_points) ]
-            if self.status.verbose:
+                          .format(Feature.get_pure_name_of(clazz), clazz.value, ServerStatus.ServerStatus.smart_points) ]
+            if ServerStatus.ServerStatus.verbose:
                 sorry.append("Talk with me something more and try again")
             return sorry
         o = clazz()
         try:
             self.add(o)
-            self.status.smart_points -= clazz.value
+            ServerStatus.ServerStatus.smart_points -= clazz.value
             return ["New feature {} is ready".format(o.get_pure_name())]
         except NotAFeature:
             return [ "Unable to add feature {}".format(o.get_pure_name()) ]
+
+    def get_plugin_instance(self, clazz, setup=None):
+        if getattr(clazz, 'chattable', False):
+            return clazz(bot=self.chatter.bot, setup=setup)
+        return super().get_plugin_instance(clazz, setup=setup)
 
     def load_evolution(self):
         try:

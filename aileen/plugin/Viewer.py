@@ -12,7 +12,7 @@ from aileen.intersect.Arguments import WithFS
 class Viewer(Feature):
     two_pixels = '▄'
 
-    def __init__(self):
+    def __init__(self, setup=None):
         WithFS.add_command('view')
 
     @staticmethod

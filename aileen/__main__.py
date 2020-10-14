@@ -13,7 +13,6 @@ class Main:
         o = Mind()
         o.run()
 
-
     def telegram(self):
         from aileen.telegram import Telegram
 
@@ -21,12 +20,10 @@ class Main:
         o = Telegram()
         o.run()
 
-
     def log_setup(self):
         logging.info("Switching log to {}".format("{}/var/aileen.log".format(os.getcwd())))
         logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s',
             level=logging.INFO, filename="{}/var/aileen.log".format(os.getcwd()))
-
 
     def daemonize(self, callback, working_directory="/"):
         with daemon.DaemonContext(working_directory=working_directory):
